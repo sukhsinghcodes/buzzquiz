@@ -1,0 +1,28 @@
+{
+  "name": "buzzquiz",
+  "version": "1.0.0",
+  "description": "Multiple choice quiz",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "watchify -t [ babelify ] src/index.js -o dist/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silentsukh/buzzquiz.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/silentsukh/buzzquiz/issues"
+  },
+  "homepage": "https://github.com/silentsukh/buzzquiz#readme",
+  "dependencies": {
+    "babel-preset-react": "^6.5.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.0.0",
+    "react": "^15.0.1",
+    "react-dom": "^15.0.1",
+    "watchify": "^3.7.0"
+  }
+}

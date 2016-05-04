@@ -1,0 +1,48 @@
+/* BASE */
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+html, body {
+	font-family: 'Ubuntu', sans-serif;
+	font-size: 16px;
+	background-color: #eee;
+	margin:0;
+	padding: 0;
+}
+header {
+	background-color: #ffc600;
+	padding: 10px;
+	width: 100%;
+	text-align: center;
+}
+h1 {
+	margin: 0;
+	padding: 0;
+	color: #fff;
+}
+
+/* LAYOUT */
+.container {
+	width: 100%;
+	padding: 0 15px;
+	margin: 0 auto;
+}
+@media (min-width: 767px) {
+	.container {
+		width: 75%;
+	}
+}
+@media (min-width: 1200px) {
+	.container {
+		width: 1180px;
+	}
+}
+
+/* MODULES */
+
+/* STATES */
+
+/* THEME */

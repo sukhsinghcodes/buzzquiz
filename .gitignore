@@ -1,4 +1,4 @@
 .idea
-node-modules/
+node_modules
 buzzquiz.sublime-project
 buzzquiz.sublime-workspace
