@@ -19362,30 +19362,265 @@ module.exports = validateDOMNesting;
 module.exports = require('./lib/React');
 
 },{"./lib/React":53}],166:[function(require,module,exports){
+function QuestionObj(id, questionText, choices) {
+	this.id = id;
+	this.questionText = questionText;
+	this.choices = choices;
+	this.status = 'unanswered';
+	this.selectedAnswerId = -1;
+}
+
+var QuestionStore = [];
+
 var React = require('react');
 var ReactDOM = require('react-dom');
 
+var BuzzQuizApp = React.createClass({
+	displayName: 'BuzzQuizApp',
+
+	getInitialState: function () {
+		return { data: [], selectedQuestion: {} };
+	},
+	componentDidMount: function () {
+		this.loadQuestionsFromServer();
+	},
+	loadQuestionsFromServer: function () {
+		$.ajax({
+			url: this.props.url,
+			dataType: 'json',
+			cache: false,
+			success: function (data) {
+				data.forEach(function (obj, i) {
+					QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
+				});
+				console.log(QuestionStore);
+				this.setState({ data: QuestionStore });
+			}.bind(this),
+			error: function (xhr, status, err) {
+				console.error(this.props.url, status, err.toString());
+			}.bind(this)
+		});
+	},
+	handleQuestionSelect: function (qId) {
+		var q = null;
+		var len = this.state.data.length;
+		for (var i = 1; i <= len; i++) {
+			if (qId === i) {
+				q = this.state.data[i - 1];
+				break;
+			}
+		}
+		this.setState({ selectedQuestion: q });
+	},
+	render: function () {
+		return React.createElement(
+			'div',
+			{ className: 'buzzQuizApp' },
+			React.createElement(QuestionGrid, { data: this.state.data, onQuestionSelect: this.handleQuestionSelect }),
+			React.createElement(Question, { question: this.state.selectedQuestion })
+		);
+	}
+});
+
+var QuestionTile = React.createClass({
+	displayName: 'QuestionTile',
+
+	getInitialState: function () {
+		return { status: 'unanswered' };
+	},
+	handleTileClick: function (e) {
+		e.preventDefault();
+		this.props.onTileClick(this.props.number);
+	},
+	render: function () {
+		return React.createElement(
+			'div',
+			{ className: 'col-sm-6 col-md-4' },
+			React.createElement(
+				'div',
+				{ className: "questionTile " + this.state.status, role: 'button', 'data-toggle': 'modal', 'data-target': '#questionModal', onClick: this.handleTileClick },
+				this.props.number
+			)
+		);
+	}
+});
+var QuestionGrid = React.createClass({
+	displayName: 'QuestionGrid',
+
+	handleQuestionSelect: function (qId) {
+		this.props.onQuestionSelect(qId);
+	},
+	render: function () {
+		var questionNodes = this.props.data.map(function (question) {
+			return React.createElement(QuestionTile, { number: question.id, key: question.id, onTileClick: this.handleQuestionSelect });
+		}, this);
+		return React.createElement(
+			'div',
+			{ className: 'row questionGrid' },
+			questionNodes
+		);
+	}
+});
 var Question = React.createClass({
 	displayName: 'Question',
 
 	render: function () {
 		return React.createElement(
 			'div',
-			{ className: 'question' },
+			{ className: 'modal', id: 'questionModal', tabindex: '-1', role: 'dialog', 'aria-labelledby': 'questionModalLabel' },
 			React.createElement(
-				'h3',
+				'div',
+				{ className: 'modal-dialog', role: 'document' },
+				React.createElement(
+					'div',
+					{ className: 'modal-content' },
+					React.createElement(QuestionHeader, null),
+					React.createElement(
+						'div',
+						{ className: 'modal-body' },
+						React.createElement(QuestionForm, { question: this.props.question })
+					),
+					React.createElement(QuestionFooter, null)
+				)
+			)
+		);
+	}
+});
+var QuestionChoice = React.createClass({
+	displayName: 'QuestionChoice',
+
+	getInitialState: function () {
+		return { selected: false };
+	},
+	AnswerClick: function (e) {
+		console.log(e.target.value);
+		this.props.handleAnswerClick(e);
+		this.setState({ selected: !this.state.selected });
+	},
+	render: function () {
+		return React.createElement(
+			'li',
+			null,
+			React.createElement(
+				'label',
 				null,
-				'Hello World!'
-			),
+				React.createElement('input', { type: 'radio', name: 'choice', value: this.props.choice.id, onClick: this.AnswerClick }),
+				' ',
+				this.props.choice.text
+			)
+		);
+	}
+});
+var QuestionForm = React.createClass({
+	displayName: 'QuestionForm',
+
+	getInitialState: function () {
+		return { selectedAnswer: '', questionId: -1 };
+	},
+	handleAnswerClick: function (e) {
+		this.setState({ selectedAnswer: e.target.value });
+	},
+	handleSubmit: function (e) {
+		e.preventDefault();
+		if (this.state.selectedAnswer) {
+			console.log(this.state.selectedAnswer);
+			$.ajax({
+				url: 'checkanswer.php',
+				data: { 'id': this.id, 'answerId': this.state.selectedAnswer },
+				type: 'post',
+				success: function (res) {},
+				error: function (xhr, status, err) {
+					console.error('checkanswer.php', status, err.toString());
+				}
+			});
+		}
+	},
+	componentWillReceiveProps: function (newProps) {
+		if (newProps.question.id != this.state.questionId) {
+			this.setState({ questionId: newProps.question.id });
+			this.setState({ selectedAnswer: '' });
+		}
+	},
+	render: function () {
+		if (this.props.question.choices) {
+			var choiceNodes = this.props.question.choices.map(function (choice) {
+				return React.createElement(QuestionChoice, { key: this.props.question.id + "-" + choice.id, choice: choice, handleAnswerClick: this.handleAnswerClick });
+			}, this);
+		}
+		return React.createElement(
+			'form',
+			{ className: 'questionForm', role: 'form', onSubmit: this.handleSubmit },
 			React.createElement(
 				'p',
 				null,
-				'poo poo man head'
+				this.props.question.questionText
+			),
+			React.createElement(
+				'ul',
+				null,
+				choiceNodes
+			),
+			React.createElement(
+				'div',
+				{ className: 'row' },
+				React.createElement(
+					'div',
+					{ className: 'col-xs-12' },
+					React.createElement(
+						'button',
+						{ type: 'submit', className: 'btn btn-success btn-lg btn-block pull-right' },
+						'Submit'
+					)
+				)
+			)
+		);
+	}
+});
+var QuestionHeader = React.createClass({
+	displayName: 'QuestionHeader',
+
+	render: function () {
+		return React.createElement(
+			'div',
+			{ className: 'modal-header' },
+			React.createElement(
+				'button',
+				{ className: 'close', type: 'button', 'data-dismiss': 'modal', 'aria-label': 'Close' },
+				React.createElement(
+					'span',
+					{ 'aria-hidden': 'true' },
+					'×'
+				)
+			),
+			React.createElement(
+				'h4',
+				{ className: 'modal-title', id: 'questionModalLabel' },
+				'Question X of Y'
+			)
+		);
+	}
+});
+var QuestionFooter = React.createClass({
+	displayName: 'QuestionFooter',
+
+	render: function () {
+		return React.createElement(
+			'div',
+			{ className: 'modal-footer' },
+			React.createElement(
+				'button',
+				{ type: 'button', className: 'btn btn-default pull-left' },
+				'Prev'
+			),
+			React.createElement(
+				'button',
+				{ type: 'button', className: 'btn btn-default pull-right' },
+				'Next'
 			)
 		);
 	}
 });
 
-ReactDOM.render(React.createElement(Question, null), document.getElementById('content'));
+ReactDOM.render(React.createElement(BuzzQuizApp, { url: 'questions.json' }), document.getElementById('content'));
 
 },{"react":165,"react-dom":29}]},{},[166]);

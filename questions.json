@@ -1,0 +1,66 @@
+[{
+	"id":1,
+	"questionText":"The Eiffel Tower is located where in Paris?",
+	"choices": [
+		{
+			"id": 1,
+			"text": "Bois de Boulogne"
+		},
+		{
+			"id": 2,
+			"text": "Champ de Mars"
+		},
+		{
+			"id": 3,
+			"text": "Jardin des Plantes"
+		},
+		{
+			"id": 4,
+			"text": "Parc de Belleville"
+		}
+	]
+},
+{
+	"id":2,
+	"questionText":"Which Apollo mission landed the first humans on the Moon?",
+	"choices": [
+		{
+			"id": 1,
+			"text": "Apollo 7"
+		},
+		{
+			"id": 2,
+			"text": "Apollo 9"
+		},
+		{
+			"id": 3,
+			"text": "Apollo 11"
+		},
+		{
+			"id": 4,
+			"text": "Apollo 13"
+		}
+	]
+},
+{
+	"id":3,
+	"questionText":"Who starred in the 1959 epic film 'Ben-Hur'?",
+	"choices": [
+		{
+			"id": 1,
+			"text": "Charlton Heston"
+		},
+		{
+			"id": 2,
+			"text": "Clark Gable"
+		},
+		{
+			"id": 3,
+			"text": "Errol Flynn"
+		},
+		{
+			"id": 4,
+			"text": "Lee Marvin"
+		}
+	]
+}]

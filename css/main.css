@@ -4,6 +4,7 @@ html {
 }
 *, *:before, *:after {
   box-sizing: inherit;
+  border-radius: 0 !important;
 }
 html, body {
 	font-family: 'Ubuntu', sans-serif;
@@ -21,24 +22,46 @@ header {
 h1 {
 	margin: 0;
 	padding: 0;
-	color: #fff;
 }
 
 /* LAYOUT */
-.container {
+.questionGrid {
 	width: 100%;
-	padding: 0 15px;
+	max-width: 800px;
 	margin: 0 auto;
+	display: block;
 }
-@media (min-width: 767px) {
-	.container {
-		width: 75%;
-	}
+.questionGrid div[class^="col-"] {
+	padding: 3px;
 }
-@media (min-width: 1200px) {
-	.container {
-		width: 1180px;
-	}
+.questionTile {
+	width: 100%;
+	height: 200px;
+	display: block;
+	padding: 20px;
+	background-color: #fff;
+	line-height: 160px;
+	text-align: center;
+	font-size: 4em;
+	cursor: pointer;
+}
+.questionTile:hover, .questionTile:focus, .questionTile:active {
+	background-color: #FFDC64;
+}
+.correct, .correct:hover, .correct:focus, .correct:active {
+	background-color: #60A565;
+}
+.wrong, .wrong:hover, .wrong:focus, .wrong:active {
+	background-color: #BC5E5C;
+}
+#questionModal ul {
+	list-style-type: none;
+	padding-left:10px;
+}
+@media (min-width: 768px) {
+.modal-dialog {
+	margin-top: 150px;
+}
 }
 
 /* MODULES */
