@@ -13,7 +13,7 @@ var ReactDOM = require('react-dom');
 
 var BuzzQuizApp = React.createClass({
 	getInitialState: function() {
-		return {data: [], selectedQuestion: {}};
+		return {questions: [], selectedQuestion: {}};
 	},
     componentDidMount: function() {
       this.loadQuestionsFromServer();
@@ -27,124 +27,30 @@ var BuzzQuizApp = React.createClass({
 				data.forEach(function(obj, i) {
 					QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
 				});
-				this.setState({data: QuestionStore});
+				this.setState({questions: QuestionStore});
 			}.bind(this),
 			error: function(xhr, status, err) {
 				console.error(this.props.url, status, err.toString());
 			}.bind(this)
 		});
 	},
-	handleQuestionSelect: function(qId) {
-		var q = null;
-		var len = this.state.data.length;
-		for (var i=1; i <= len; i++) {
-			if (qId === i) {
-				q = this.state.data[i-1];
-				break;
-			}
-		}
-		this.setState({selectedQuestion: q});
-	},
-	render: function() {
-		return (
-		<div className="buzzQuizApp">
-			<QuestionGrid data={this.state.data} onQuestionSelect={this.handleQuestionSelect} />
-			<Question question={this.state.selectedQuestion} />
-		</div>
-		);
-	}
-});
-
-var QuestionTile = React.createClass({
-	getInitialState: function() {
-		return {status: 'unanswered'};
-	},
-	handleTileClick: function(e) {
-		e.preventDefault();
-		this.props.onTileClick(this.props.number);
-	},
-	render: function() {
-		return (
-			<div className="col-sm-6 col-md-4">
-				<div className={"questionTile " + this.state.status} role="button" data-toggle="modal" data-target="#questionModal" onClick={this.handleTileClick}>
-					{this.props.number}
-				</div>
-			</div>
-		);
-	}
-});
-var QuestionGrid = React.createClass({
-	handleQuestionSelect: function(qId) {
-		this.props.onQuestionSelect(qId);
-	},
-	render: function() {
-		var questionNodes = this.props.data.map(function(question) {
-			return (
-				<QuestionTile number={question.id} key={question.id} onTileClick={this.handleQuestionSelect} />
-			);
-		}, this);
-		return (
-			<div className="row questionGrid">
-				{questionNodes}
-			</div>
-		);
-	}
-});
-var Question = React.createClass({
-	render: function() {
-		return (
-			<div className="modal" id="questionModal" tabindex="-1" role="dialog" aria-labelledby="questionModalLabel">
-			  <div className="modal-dialog" role="document">
-			    <div className="modal-content">
-					<QuestionHeader />
-					<div className="modal-body">
-						<QuestionForm question={this.props.question} />
-					</div>
-					<QuestionFooter />
-			    </div>
-			  </div>
-			</div>
-
-		);
-	}
-});
-var QuestionChoice = React.createClass({
-    getInitialState: function() {
-      return {selected: false};
-    },
-    AnswerClick: function(e) {
-    	console.log(e.target.value);
-    	this.props.handleAnswerClick(e);
-    	this.setState({selected: !this.state.selected});
-    },
-    render: function() {
-    	return (
-        	<li className={this.props.result}>
-        		<label>
-	        		<input type="radio" name="choice" value={this.props.choice.id} onClick={this.AnswerClick} /> {this.props.choice.text}
-        		</label>
-        	</li>
-    	);
-    }
-});
-var QuestionForm = React.createClass({
-    getInitialState: function() {
-      return {selectedAnswer: '', questionId: -1};
-    },
-    handleAnswerClick: function(e) {
-      this.setState({selectedAnswer: e.target.value, result: ''});
-    },
-    handleSubmit: function(e) {
-    	e.preventDefault();
-		if (this.state.selectedAnswer) {
+	handleQuestionSubmit: function(questionId, selectedAnswer) {
+		if (selectedAnswer && selectedAnswer > 0) {
 			$.ajax({
 				url: 'checkanswer.php',
-				data: {questionId:this.state.questionId, answerId:this.state.selectedAnswer},
+				data: {questionId:questionId, answerId:selectedAnswer},
 				type: 'post',
 				success: function(res) {
-						console.log(res);
+					console.log(res);
 					if(res && res != null || res != undefined) {
-						this.setState({result: res});
+						for(var i=0, len = QuestionStore.length; i < len; i++) {
+							if (QuestionStore[i].id === questionId) {
+								QuestionStore[i].status = res;
+								QuestionStore[i].selectedAnswer = selectedAnswer;
+								this.setState({questions: QuestionStore});
+								break;
+							}
+						}
 					}
 				}.bind(this),
 				error: function(xhr, status, err) {
@@ -153,53 +59,53 @@ var QuestionForm = React.createClass({
 			});
 
 		}
-    },
-	componentWillReceiveProps: function(newProps) {
-	  if (newProps.question.id != this.state.questionId) {
-	    this.setState({questionId: newProps.question.id});
-	    this.setState({selectedAnswer: ''});
-	  }
+
 	},
 	render: function() {
-		if (this.props.question.choices) {
-			var choiceNodes = this.props.question.choices.map(function(choice) {
-				return (
-		        	<QuestionChoice result={this.state.result} key={this.props.question.id+"-"+choice.id} choice={choice} handleAnswerClick={this.handleAnswerClick} />
-				);
-			}, this);
-		}
+		var questionNodes = this.state.questions.map(function(question) {
+			return (
+				<Question data={question} key={question.id} submitCallback={this.handleQuestionSubmit} />
+			);
+		}, this);
 		return (
-	      	<form className="questionForm" role="form" onSubmit={this.handleSubmit}>
-		        <p>{this.props.question.questionText}</p>
-	            <ul>
-	            	{choiceNodes}
-		        </ul>
-		        <div className="row">
-			        <div className="col-xs-12">
-				        <button type="submit" className="btn btn-success btn-lg btn-block pull-right">Submit</button>
-				    </div>
-			    </div>
-	      	</form>
+			<div className="buzzQuizApp">
+				<ol className="list-group">
+					{questionNodes}
+				</ol>
+			</div>
 		);
 	}
 });
-var QuestionHeader = React.createClass({
+
+var Question = React.createClass({
+	handleSubmit: function(e) {
+		e.preventDefault();
+		this.props.submitCallback(this.props.data.id, e.target.choice.value);
+	},
 	render: function() {
-		return (
-	      <div className="modal-header">
-	        <button className="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	        <h4 className="modal-title" id="questionModalLabel">Question X of Y</h4>
-	      </div>
-		);
-	}
-});
-var QuestionFooter = React.createClass({
-	render: function() {
-		return (
-	      <div className="modal-footer">
-	      	<button type="button" className="btn btn-default pull-left">Prev</button>
-	      	<button type="button" className="btn btn-default pull-right">Next</button>
-	      </div>
+		var choices = this.props.data.choices.map(function(choice) {
+			return (
+				<li key={choice.id}>
+	        		<label><input type="radio" name="choice" value={choice.id} selected={this.props.data.selectedAnswerId === choice.id} disabled={this.props.data.status !== 'unanswered'} /> {choice.text}</label>
+        		</li>
+			);
+		}, this);
+		return(
+			<li className="list-group-item">
+		      	<form className={"questionForm " + this.props.data.status} role="form" onSubmit={this.handleSubmit}>
+		      		<input type="hidden" value={this.props.data.id} name="id" />
+					<h4>{this.props.data.questionText}</h4>
+					<ul>
+						{choices}
+					</ul>
+			        <div className="row">
+				        <div className="col-xs-12">
+				        	<button type="submit" className="btn btn-success pull-right">Submit</button>
+				        	
+				        </div>
+			       	</div>
+				</form>
+			</li>
 		);
 	}
 });

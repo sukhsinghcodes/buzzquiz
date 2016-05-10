@@ -54,7 +54,10 @@ h1 {
 .wrong, .wrong:hover, .wrong:focus, .wrong:active {
 	background-color: #BC5E5C;
 }
-#questionModal ul {
+.correct .btn-success, .wrong .btn-success {
+	display: none;
+}
+#questionModal ul, .questionForm ul {
 	list-style-type: none;
 	padding-left:10px;
 }
