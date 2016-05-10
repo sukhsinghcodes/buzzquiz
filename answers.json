@@ -1,14 +1,1 @@
-[
-{
-	"id":1,
-	"answer":2
-},
-{
-	"id":2,
-	"answer":3
-},
-{
-	"id":3,
-	"answer":1
-},
-]
+[{"id":1,"answer":2},{"id":2,"answer":3},{"id":3,"answer":1}]

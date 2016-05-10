@@ -19393,7 +19393,6 @@ var BuzzQuizApp = React.createClass({
 				data.forEach(function (obj, i) {
 					QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
 				});
-				console.log(QuestionStore);
 				this.setState({ data: QuestionStore });
 			}.bind(this),
 			error: function (xhr, status, err) {
@@ -19500,7 +19499,7 @@ var QuestionChoice = React.createClass({
 	render: function () {
 		return React.createElement(
 			'li',
-			null,
+			{ className: this.props.result },
 			React.createElement(
 				'label',
 				null,
@@ -19518,20 +19517,24 @@ var QuestionForm = React.createClass({
 		return { selectedAnswer: '', questionId: -1 };
 	},
 	handleAnswerClick: function (e) {
-		this.setState({ selectedAnswer: e.target.value });
+		this.setState({ selectedAnswer: e.target.value, result: '' });
 	},
 	handleSubmit: function (e) {
 		e.preventDefault();
 		if (this.state.selectedAnswer) {
-			console.log(this.state.selectedAnswer);
 			$.ajax({
 				url: 'checkanswer.php',
-				data: { 'id': this.id, 'answerId': this.state.selectedAnswer },
+				data: { questionId: this.state.questionId, answerId: this.state.selectedAnswer },
 				type: 'post',
-				success: function (res) {},
+				success: function (res) {
+					console.log(res);
+					if (res && res != null || res != undefined) {
+						this.setState({ result: res });
+					}
+				}.bind(this),
 				error: function (xhr, status, err) {
 					console.error('checkanswer.php', status, err.toString());
-				}
+				}.bind(this)
 			});
 		}
 	},
@@ -19544,7 +19547,7 @@ var QuestionForm = React.createClass({
 	render: function () {
 		if (this.props.question.choices) {
 			var choiceNodes = this.props.question.choices.map(function (choice) {
-				return React.createElement(QuestionChoice, { key: this.props.question.id + "-" + choice.id, choice: choice, handleAnswerClick: this.handleAnswerClick });
+				return React.createElement(QuestionChoice, { result: this.state.result, key: this.props.question.id + "-" + choice.id, choice: choice, handleAnswerClick: this.handleAnswerClick });
 			}, this);
 		}
 		return React.createElement(
