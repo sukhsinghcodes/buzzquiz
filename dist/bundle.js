@@ -19362,141 +19362,246 @@ module.exports = validateDOMNesting;
 module.exports = require('./lib/React');
 
 },{"./lib/React":53}],166:[function(require,module,exports){
-function QuestionObj(id, questionText, choices) {
-	this.id = id;
-	this.questionText = questionText;
-	this.choices = choices;
-	this.status = 'unanswered';
-	this.selectedAnswerId = -1;
-}
+(function () {
+	function QuestionObj(id, questionText, choices) {
+		this.id = id;
+		this.questionText = questionText;
+		this.choices = choices;
+		this.status = 'unanswered';
+		this.selectedAnswer = -1;
+		this.correctAnswer = -1;
+	}
 
-var QuestionStore = [];
+	var QuestionStore = [];
+	var correctAnswersCount = 0;
+	var wrongAnswersCount = 0;
 
-var React = require('react');
-var ReactDOM = require('react-dom');
+	var React = require('react');
+	var ReactDOM = require('react-dom');
 
-var BuzzQuizApp = React.createClass({
-	displayName: 'BuzzQuizApp',
+	var BuzzQuizApp = React.createClass({
+		displayName: 'BuzzQuizApp',
 
-	getInitialState: function () {
-		return { questions: [], selectedQuestion: {} };
-	},
-	componentDidMount: function () {
-		this.loadQuestionsFromServer();
-	},
-	loadQuestionsFromServer: function () {
-		$.ajax({
-			url: this.props.url,
-			dataType: 'json',
-			cache: false,
-			success: function (data) {
-				data.forEach(function (obj, i) {
-					QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
-				});
-				this.setState({ questions: QuestionStore });
-			}.bind(this),
-			error: function (xhr, status, err) {
-				console.error(this.props.url, status, err.toString());
-			}.bind(this)
-		});
-	},
-	handleQuestionSubmit: function (questionId, selectedAnswer) {
-		if (selectedAnswer && selectedAnswer > 0) {
+		getInitialState: function () {
+			return { questions: [], selectedQuestion: {}, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount };
+		},
+		componentDidMount: function () {
+			this.loadQuestionsFromServer();
+		},
+		loadQuestionsFromServer: function () {
 			$.ajax({
-				url: 'checkanswer.php',
-				data: { questionId: questionId, answerId: selectedAnswer },
-				type: 'post',
-				success: function (res) {
-					console.log(res);
-					if (res && res != null || res != undefined) {
-						for (var i = 0, len = QuestionStore.length; i < len; i++) {
-							if (QuestionStore[i].id === questionId) {
-								QuestionStore[i].status = res;
-								QuestionStore[i].selectedAnswer = selectedAnswer;
-								this.setState({ questions: QuestionStore });
-								break;
-							}
-						}
-					}
+				url: this.props.url,
+				dataType: 'json',
+				cache: false,
+				success: function (data) {
+					data.forEach(function (obj, i) {
+						QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
+					});
+					this.setState({ questions: QuestionStore });
 				}.bind(this),
 				error: function (xhr, status, err) {
-					console.error('checkanswer.php', status, err.toString());
+					console.error(this.props.url, status, err.toString());
 				}.bind(this)
 			});
-		}
-	},
-	render: function () {
-		var questionNodes = this.state.questions.map(function (question) {
-			return React.createElement(Question, { data: question, key: question.id, submitCallback: this.handleQuestionSubmit });
-		}, this);
-		return React.createElement(
-			'div',
-			{ className: 'buzzQuizApp' },
-			React.createElement(
-				'ol',
-				{ className: 'list-group' },
-				questionNodes
-			)
-		);
-	}
-});
-
-var Question = React.createClass({
-	displayName: 'Question',
-
-	handleSubmit: function (e) {
-		e.preventDefault();
-		this.props.submitCallback(this.props.data.id, e.target.choice.value);
-	},
-	render: function () {
-		var choices = this.props.data.choices.map(function (choice) {
+		},
+		handleQuestionSubmit: function (questionId, selectedAnswer) {
+			if (selectedAnswer && selectedAnswer > 0) {
+				$.ajax({
+					url: 'checkanswer.php',
+					data: { questionId: questionId, answerId: selectedAnswer },
+					type: 'post',
+					success: function (res) {
+						if (res && res != null || res != undefined) {
+							var response = JSON.parse(res);
+							for (var i = 0, len = QuestionStore.length; i < len; i++) {
+								if (QuestionStore[i].id === questionId) {
+									QuestionStore[i].status = response.result;
+									QuestionStore[i].correctAnswer = response.correctAnswer;
+									QuestionStore[i].selectedAnswer = selectedAnswer;
+									response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
+									this.setState({ questions: QuestionStore, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount });
+									break;
+								}
+							}
+						}
+					}.bind(this),
+					error: function (xhr, status, err) {
+						console.error('checkanswer.php', status, err.toString());
+					}.bind(this)
+				});
+			}
+		},
+		render: function () {
+			var questionNodes = this.state.questions.map(function (question, i) {
+				return React.createElement(Question, { data: question, key: question.id, submitCallback: this.handleQuestionSubmit });
+			}, this);
 			return React.createElement(
-				'li',
-				{ key: choice.id },
+				'div',
+				{ className: 'buzzQuizApp' },
+				React.createElement(Summary, { total: this.state.questions.length, correctAnswers: this.state.correctAnswers, wrongAnswers: this.state.wrongAnswers }),
 				React.createElement(
-					'label',
-					null,
-					React.createElement('input', { type: 'radio', name: 'choice', value: choice.id, selected: this.props.data.selectedAnswerId === choice.id, disabled: this.props.data.status !== 'unanswered' }),
-					' ',
-					choice.text
+					'ol',
+					{ className: 'list-group' },
+					questionNodes
 				)
 			);
-		}, this);
-		return React.createElement(
-			'li',
-			{ className: 'list-group-item' },
-			React.createElement(
-				'form',
-				{ className: "questionForm " + this.props.data.status, role: 'form', onSubmit: this.handleSubmit },
-				React.createElement('input', { type: 'hidden', value: this.props.data.id, name: 'id' }),
+		}
+	});
+
+	var Question = React.createClass({
+		displayName: 'Question',
+
+		handleSubmit: function (e) {
+			e.preventDefault();
+			this.props.submitCallback(this.props.data.id, e.target.choice.value);
+		},
+		render: function () {
+			var choices = this.props.data.choices.map(function (choice) {
+				var cssClasses = (this.props.data.selectedAnswer == choice.id) + " " + (this.props.data.correctAnswer == choice.id ? "text-success" : "");
+				return React.createElement(
+					'li',
+					{ key: choice.id, className: cssClasses },
+					React.createElement(
+						'label',
+						null,
+						React.createElement('input', { type: 'radio', name: 'choice', value: choice.id, disabled: this.props.data.status !== 'unanswered' }),
+						' ',
+						choice.text
+					)
+				);
+			}, this);
+			return React.createElement(
+				'li',
+				{ className: 'list-group-item' },
 				React.createElement(
-					'h4',
-					null,
-					this.props.data.questionText
-				),
-				React.createElement(
-					'ul',
-					null,
-					choices
-				),
-				React.createElement(
-					'div',
-					{ className: 'row' },
+					'form',
+					{ className: "questionForm " + this.props.data.status, role: 'form', onSubmit: this.handleSubmit },
+					React.createElement('input', { type: 'hidden', value: this.props.data.id, name: 'id' }),
+					React.createElement(
+						'h4',
+						null,
+						this.props.data.questionText
+					),
+					React.createElement(
+						'ul',
+						null,
+						choices
+					),
 					React.createElement(
 						'div',
-						{ className: 'col-xs-12' },
+						{ className: 'row' },
 						React.createElement(
-							'button',
-							{ type: 'submit', className: 'btn btn-success pull-right' },
-							'Submit'
+							'div',
+							{ className: 'col-xs-12' },
+							React.createElement(
+								'button',
+								{ type: 'submit', className: 'btn btn-success pull-right' },
+								'Submit'
+							),
+							React.createElement(
+								'label',
+								{ className: 'result pull-right' },
+								React.createElement('span', { className: 'glyphicon glyphicon-ok' }),
+								React.createElement('span', { className: 'glyphicon glyphicon-remove' }),
+								' ',
+								this.props.data.status
+							)
 						)
 					)
 				)
-			)
-		);
-	}
-});
+			);
+		}
+	});
 
-ReactDOM.render(React.createElement(BuzzQuizApp, { url: 'questions.json' }), document.getElementById('content'));
+	var Summary = React.createClass({
+		displayName: 'Summary',
+
+		render: function () {
+			return React.createElement(
+				'div',
+				{ className: 'panel panel-default' },
+				React.createElement(
+					'div',
+					{ className: 'panel-body' },
+					React.createElement(
+						'h2',
+						null,
+						'Summary'
+					),
+					React.createElement(
+						'div',
+						{ className: 'text-center' },
+						React.createElement(
+							'div',
+							{ className: 'col-sm-3' },
+							React.createElement(
+								'h3',
+								null,
+								'Total: ',
+								React.createElement(
+									'strong',
+									null,
+									this.props.total
+								)
+							)
+						),
+						React.createElement(
+							'div',
+							{ className: 'col-sm-3' },
+							React.createElement(
+								'h3',
+								null,
+								'Correct: ',
+								React.createElement(
+									'strong',
+									null,
+									React.createElement(
+										'span',
+										{ className: 'text-success' },
+										this.props.correctAnswers
+									)
+								)
+							)
+						),
+						React.createElement(
+							'div',
+							{ className: 'col-sm-3' },
+							React.createElement(
+								'h3',
+								null,
+								'Wrong: ',
+								React.createElement(
+									'strong',
+									null,
+									React.createElement(
+										'span',
+										{ className: 'text-danger' },
+										this.props.wrongAnswers
+									)
+								)
+							)
+						),
+						React.createElement(
+							'div',
+							{ className: 'col-sm-3' },
+							React.createElement(
+								'h3',
+								null,
+								'Score: ',
+								React.createElement(
+									'strong',
+									null,
+									(this.props.correctAnswers / this.props.total * 100).toFixed(0) + "%"
+								)
+							)
+						)
+					)
+				)
+			);
+		}
+	});
+
+	ReactDOM.render(React.createElement(BuzzQuizApp, { url: 'questions.json' }), document.getElementById('content'));
+})();
 
 },{"react":165,"react-dom":29}]},{},[166]);

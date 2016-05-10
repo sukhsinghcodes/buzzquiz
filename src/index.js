@@ -1,19 +1,23 @@
+(function() {
 function QuestionObj(id, questionText, choices) {
 	this.id = id;
 	this.questionText = questionText;
 	this.choices = choices;
 	this.status = 'unanswered';
-	this.selectedAnswerId = -1;
+	this.selectedAnswer = -1;
+	this.correctAnswer = -1;
 }
 
 var QuestionStore = [];
+var correctAnswersCount = 0;
+var wrongAnswersCount = 0;
 
 var React = require('react');
 var ReactDOM = require('react-dom');
 
 var BuzzQuizApp = React.createClass({
 	getInitialState: function() {
-		return {questions: [], selectedQuestion: {}};
+		return {questions: [], selectedQuestion: {}, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount};
 	},
     componentDidMount: function() {
       this.loadQuestionsFromServer();
@@ -41,13 +45,15 @@ var BuzzQuizApp = React.createClass({
 				data: {questionId:questionId, answerId:selectedAnswer},
 				type: 'post',
 				success: function(res) {
-					console.log(res);
 					if(res && res != null || res != undefined) {
+						var response = JSON.parse(res);
 						for(var i=0, len = QuestionStore.length; i < len; i++) {
 							if (QuestionStore[i].id === questionId) {
-								QuestionStore[i].status = res;
+								QuestionStore[i].status = response.result;
+								QuestionStore[i].correctAnswer = response.correctAnswer;
 								QuestionStore[i].selectedAnswer = selectedAnswer;
-								this.setState({questions: QuestionStore});
+								response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
+								this.setState({questions: QuestionStore, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount});
 								break;
 							}
 						}
@@ -62,13 +68,14 @@ var BuzzQuizApp = React.createClass({
 
 	},
 	render: function() {
-		var questionNodes = this.state.questions.map(function(question) {
+		var questionNodes = this.state.questions.map(function(question, i) {
 			return (
 				<Question data={question} key={question.id} submitCallback={this.handleQuestionSubmit} />
 			);
 		}, this);
 		return (
 			<div className="buzzQuizApp">
+				<Summary total={this.state.questions.length} correctAnswers={this.state.correctAnswers} wrongAnswers={this.state.wrongAnswers} />
 				<ol className="list-group">
 					{questionNodes}
 				</ol>
@@ -84,9 +91,10 @@ var Question = React.createClass({
 	},
 	render: function() {
 		var choices = this.props.data.choices.map(function(choice) {
+			var cssClasses = (this.props.data.selectedAnswer == choice.id) + " " + (this.props.data.correctAnswer == choice.id ? "text-success" : "");
 			return (
-				<li key={choice.id}>
-	        		<label><input type="radio" name="choice" value={choice.id} selected={this.props.data.selectedAnswerId === choice.id} disabled={this.props.data.status !== 'unanswered'} /> {choice.text}</label>
+				<li key={choice.id} className={cssClasses}>
+	        		<label><input type="radio" name="choice" value={choice.id} disabled={this.props.data.status !== 'unanswered'} /> {choice.text}</label>
         		</li>
 			);
 		}, this);
@@ -101,7 +109,7 @@ var Question = React.createClass({
 			        <div className="row">
 				        <div className="col-xs-12">
 				        	<button type="submit" className="btn btn-success pull-right">Submit</button>
-				        	
+				        	<label className="result pull-right"><span className="glyphicon glyphicon-ok"></span><span className="glyphicon glyphicon-remove"></span> {this.props.data.status}</label>
 				        </div>
 			       	</div>
 				</form>
@@ -110,6 +118,31 @@ var Question = React.createClass({
 	}
 });
 
+var Summary = React.createClass({
+	render: function() {
+		return (
+			<div className="panel panel-default">
+				<div className="panel-body">
+					<h2>Summary</h2>
+					<div className="text-center">
+						<div className="col-sm-3">
+							<h3>Total: <strong>{this.props.total}</strong></h3>
+						</div>
+						<div className="col-sm-3">
+							<h3>Correct: <strong><span className="text-success">{this.props.correctAnswers}</span></strong></h3>
+						</div>
+						<div className="col-sm-3">
+							<h3>Wrong: <strong><span className="text-danger">{this.props.wrongAnswers}</span></strong></h3>
+						</div>
+						<div className="col-sm-3">
+							<h3>Score: <strong>{((this.props.correctAnswers/this.props.total)*100).toFixed(0) + "%"}</strong></h3>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
+});
 
 ReactDOM.render(
 	<BuzzQuizApp url="questions.json" />,
@@ -117,3 +150,4 @@ ReactDOM.render(
 );
 
 
+})();

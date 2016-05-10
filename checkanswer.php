@@ -6,13 +6,17 @@ if (isset($_POST['questionId']) && isset($_POST['answerId'])) {
 	$json = json_decode($str, true);
 
 	$result = 'wrong';
+	$correctAnswer = -1;
 
 	foreach ($json as $key => $question) {
-		if($question['id'] == $questionId && $question['answer'] == $answerId) {
-			$result = 'correct';
+		if($question['id'] == $questionId) {
+			$correctAnswer = $question['answer'];
+			if($question['answer'] == $answerId) {
+				$result = 'correct';
+			}
 			break;
 		}
 	}
-
-	echo $result;
+	$return = array('result' => $result, 'correctAnswer' => $correctAnswer);
+	echo json_encode($return);
 }
