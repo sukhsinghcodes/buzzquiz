@@ -105,7 +105,8 @@ var BuzzQuizApp = React.createClass({
 var Question = React.createClass({
 	handleSubmit: function(e) {
 		e.preventDefault();
-		this.props.submitCallback(this.props.data.id, e.target.choice.value);
+		var selected = $(e.target).find("input[type='radio']:checked");
+		this.props.submitCallback(this.props.data.id, selected.val());
 	},
 	render: function() {
 		var cssClasses = "";
