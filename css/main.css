@@ -27,7 +27,17 @@ h1, h2 {
 	margin: 0;
 	padding: 0;
 }
-
+h2, h3 {
+	font-size: 1.25em;
+}
+@media (min-width: 768px){
+	h2 {
+		font-size: 2em;
+	} 
+	h3 {
+		font-size: 1.5em;
+	}
+}
 /* LAYOUT */
 .questionGrid {
 	margin-bottom: 20px;
@@ -90,7 +100,6 @@ h1, h2 {
 .questionNav {
 	padding-bottom: 30px; 
 }
-
 
 /* MODULES */
 

@@ -19456,14 +19456,14 @@ module.exports = require('./lib/React');
 				'div',
 				{ className: 'buzzQuizApp' },
 				React.createElement(Summary, { total: this.state.questions.length, correctAnswers: this.state.correctAnswers, wrongAnswers: this.state.wrongAnswers }),
+				questionNodes,
+				React.createElement(QuestionNav, { navCallback: this.handleNavClick, hideNext: hideNext, hidePrev: hidePrev }),
 				React.createElement(
 					'h3',
 					null,
 					'Select a question to begin'
 				),
-				React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion }),
-				questionNodes,
-				React.createElement(QuestionNav, { navCallback: this.handleNavClick, hideNext: hideNext, hidePrev: hidePrev })
+				React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion })
 			);
 		}
 	});
@@ -19495,7 +19495,7 @@ module.exports = require('./lib/React');
 			}, this);
 			return React.createElement(
 				'div',
-				{ className: 'panel panel-default' },
+				{ className: 'panel panel-default questionPanel' },
 				React.createElement(
 					'div',
 					{ className: 'panel-body' },
@@ -19560,7 +19560,7 @@ module.exports = require('./lib/React');
 						{ className: 'text-center' },
 						React.createElement(
 							'div',
-							{ className: 'col-sm-3' },
+							{ className: 'col-xs-4 col-sm-3' },
 							React.createElement(
 								'h3',
 								null,
@@ -19574,7 +19574,7 @@ module.exports = require('./lib/React');
 						),
 						React.createElement(
 							'div',
-							{ className: 'col-sm-3' },
+							{ className: 'col-xs-4 col-sm-3' },
 							React.createElement(
 								'h3',
 								null,
@@ -19589,7 +19589,7 @@ module.exports = require('./lib/React');
 						),
 						React.createElement(
 							'div',
-							{ className: 'col-sm-3' },
+							{ className: 'col-xs-4 col-sm-3' },
 							React.createElement(
 								'h3',
 								null,
@@ -19604,7 +19604,7 @@ module.exports = require('./lib/React');
 						),
 						React.createElement(
 							'div',
-							{ className: 'col-sm-3' },
+							{ className: 'col-xs-12 col-sm-3' },
 							React.createElement(
 								'h3',
 								null,

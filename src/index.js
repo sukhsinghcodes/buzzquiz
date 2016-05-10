@@ -93,10 +93,10 @@ var BuzzQuizApp = React.createClass({
 		return (
 			<div className="buzzQuizApp">
 				<Summary total={this.state.questions.length} correctAnswers={this.state.correctAnswers} wrongAnswers={this.state.wrongAnswers} />
-				<h3>Select a question to begin</h3>
-				<QuestionGrid data={this.state.questions} selectCallback={this.handleQuestionSelect} selectedQuestion={this.state.selectedQuestion} />
 				{questionNodes}
 				<QuestionNav navCallback={this.handleNavClick} hideNext={hideNext} hidePrev={hidePrev} />
+				<h3>Select a question to begin</h3>
+				<QuestionGrid data={this.state.questions} selectCallback={this.handleQuestionSelect} selectedQuestion={this.state.selectedQuestion} />
 			</div>
 		);
 	}
@@ -120,7 +120,7 @@ var Question = React.createClass({
 			);
 		}, this);
 		return(
-			<div className="panel panel-default">
+			<div className="panel panel-default questionPanel">
 				<div className="panel-body">
 			      	<form className={"questionForm " + this.props.data.status} role="form" onSubmit={this.handleSubmit}>
 			      		<input type="hidden" value={this.props.data.id} name="id" />
@@ -148,16 +148,16 @@ var Summary = React.createClass({
 				<div className="panel-body">
 					<h2>Summary</h2>
 					<div className="text-center">
-						<div className="col-sm-3">
+						<div className="col-xs-4 col-sm-3">
 							<h3>Total: <strong>{this.props.total}</strong></h3>
 						</div>
-						<div className="col-sm-3">
+						<div className="col-xs-4 col-sm-3">
 							<h3><span className="glyphicon glyphicon-ok text-success"></span> <strong>{this.props.correctAnswers}</strong></h3>
 						</div>
-						<div className="col-sm-3">
+						<div className="col-xs-4 col-sm-3">
 							<h3><span className="glyphicon glyphicon-remove text-danger"></span> <strong>{this.props.wrongAnswers}</strong></h3>
 						</div>
-						<div className="col-sm-3">
+						<div className="col-xs-12 col-sm-3">
 							<h3>Score: <strong>{((this.props.correctAnswers/this.props.total)*100).toFixed(0) + "%"}</strong></h3>
 						</div>
 					</div>
