@@ -93,6 +93,7 @@ var BuzzQuizApp = React.createClass({
 		return (
 			<div className="buzzQuizApp">
 				<Summary total={this.state.questions.length} correctAnswers={this.state.correctAnswers} wrongAnswers={this.state.wrongAnswers} />
+				<h3>Select a question to begin</h3>
 				<QuestionGrid data={this.state.questions} selectCallback={this.handleQuestionSelect} selectedQuestion={this.state.selectedQuestion} />
 				{questionNodes}
 				<QuestionNav navCallback={this.handleNavClick} hideNext={hideNext} hidePrev={hidePrev} />
@@ -173,7 +174,7 @@ var QuestionGrid = React.createClass({
 		var questionNodes = this.props.data.map(function(question, i) {
 			var selectedCssClass = (question.id == this.props.selectedQuestion ? "selected" : "");
 			return (
-				<div key={question.id} className={"col-sm-3 col-md-2 questionTile"}>
+				<div key={question.id} className={"col-xs-4 col-sm-3 col-md-2 questionTile"}>
 					<div className={question.status + " " + selectedCssClass} role="button" onClick={this.tileClick} data-question={question.id}>
 						{i+1}
 					</div>
@@ -196,7 +197,7 @@ var QuestionNav = React.createClass({
 	},
 	render: function() {
 		return (
-			<div className="row">
+			<div className="row questionNav">
 				<div className="col-xs-12">
 					<button type="button" className={"btn btn-default pull-left " + this.props.hidePrev} data-direction="-1" onClick={this.navClick}>Prev</button>
 					<button type="button" className={"btn btn-default pull-right " + this.props.hideNext} data-direction="1" onClick={this.navClick}>Next</button>

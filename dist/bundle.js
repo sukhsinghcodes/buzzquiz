@@ -19456,6 +19456,11 @@ module.exports = require('./lib/React');
 				'div',
 				{ className: 'buzzQuizApp' },
 				React.createElement(Summary, { total: this.state.questions.length, correctAnswers: this.state.correctAnswers, wrongAnswers: this.state.wrongAnswers }),
+				React.createElement(
+					'h3',
+					null,
+					'Select a question to begin'
+				),
 				React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion }),
 				questionNodes,
 				React.createElement(QuestionNav, { navCallback: this.handleNavClick, hideNext: hideNext, hidePrev: hidePrev })
@@ -19627,7 +19632,7 @@ module.exports = require('./lib/React');
 				var selectedCssClass = question.id == this.props.selectedQuestion ? "selected" : "";
 				return React.createElement(
 					'div',
-					{ key: question.id, className: "col-sm-3 col-md-2 questionTile" },
+					{ key: question.id, className: "col-xs-4 col-sm-3 col-md-2 questionTile" },
 					React.createElement(
 						'div',
 						{ className: question.status + " " + selectedCssClass, role: 'button', onClick: this.tileClick, 'data-question': question.id },
@@ -19656,7 +19661,7 @@ module.exports = require('./lib/React');
 		render: function () {
 			return React.createElement(
 				'div',
-				{ className: 'row' },
+				{ className: 'row questionNav' },
 				React.createElement(
 					'div',
 					{ className: 'col-xs-12' },

@@ -36,22 +36,22 @@ h1, h2 {
 	padding: 3px;
 }
 .questionTile > div {
-	width: 100%;
-	height: 150px;
+    width: 100%;
 	display: block;
-	padding: 20px;
+	padding: 15px;
 	background-color: #fff;
-	line-height: 110px;
 	text-align: center;
-	font-size: 3em;
+	font-size: 2em;
 	cursor: pointer;
-	border: #ddd solid 1px; 
+	border: #ddd solid 1px;
 }
 .questionTile > div:hover, .questionTile > div:focus, .questionTile > div:active, .questionTile > .selected {
 	background-color: #FFDC64;
 }
 .questionTile > .selected {
-   border: 5px solid #000;
+	-webkit-box-shadow: inset 0px 0px 0px 5px rgba(0,0,0,0.75);
+	-moz-box-shadow: inset 0px 0px 0px 5px rgba(0,0,0,0.75);
+	box-shadow: inset 0px 0px 0px 5px rgba(0,0,0,0.75);
 }
 .questionTile .correct, .questionTile .correct:hover, .questionTile .correct:focus, .questionTile .correct:active {
 	background-color: #60A565;
@@ -86,6 +86,9 @@ h1, h2 {
 .questionForm ul {
 	list-style-type: none;
 	padding-left:10px;
+}
+.questionNav {
+	padding-bottom: 30px; 
 }
 
 
