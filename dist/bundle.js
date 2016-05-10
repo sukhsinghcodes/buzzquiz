@@ -19383,7 +19383,7 @@ module.exports = require('./lib/React');
 		displayName: 'BuzzQuizApp',
 
 		getInitialState: function () {
-			return { questions: [], selectedQuestion: {}, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount };
+			return { questions: [], selectedQuestion: -1, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount };
 		},
 		componentDidMount: function () {
 			this.loadQuestionsFromServer();
@@ -19403,6 +19403,9 @@ module.exports = require('./lib/React');
 					console.error(this.props.url, status, err.toString());
 				}.bind(this)
 			});
+		},
+		handleQuestionSelect: function (questionId) {
+			this.setState({ selectedQuestion: questionId });
 		},
 		handleQuestionSubmit: function (questionId, selectedAnswer) {
 			if (selectedAnswer && selectedAnswer > 0) {
@@ -19431,19 +19434,31 @@ module.exports = require('./lib/React');
 				});
 			}
 		},
+		handleNavClick: function (direction) {
+			var d = parseInt(direction);
+			var newSelectedQuestion = this.state.selectedQuestion;
+			if (d > 0 && newSelectedQuestion < this.state.questions.length) {
+				newSelectedQuestion++;
+			} else if (d < 0 && newSelectedQuestion > 1) {
+				newSelectedQuestion--;
+			}
+			if (newSelectedQuestion !== this.state.selectedQuestion) this.handleQuestionSelect(newSelectedQuestion);
+		},
 		render: function () {
 			var questionNodes = this.state.questions.map(function (question, i) {
-				return React.createElement(Question, { data: question, key: question.id, submitCallback: this.handleQuestionSubmit });
+				if (question.id == this.state.selectedQuestion) {
+					return React.createElement(Question, { number: i + 1, data: question, key: question.id, submitCallback: this.handleQuestionSubmit });
+				}
 			}, this);
+			var hideNext = this.state.selectedQuestion === this.state.questions.length || this.state.selectedQuestion < 0 ? "hide" : "show";
+			var hidePrev = this.state.selectedQuestion === 1 || this.state.selectedQuestion < 0 ? "hide" : "show";
 			return React.createElement(
 				'div',
 				{ className: 'buzzQuizApp' },
 				React.createElement(Summary, { total: this.state.questions.length, correctAnswers: this.state.correctAnswers, wrongAnswers: this.state.wrongAnswers }),
-				React.createElement(
-					'ol',
-					{ className: 'list-group' },
-					questionNodes
-				)
+				React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion }),
+				questionNodes,
+				React.createElement(QuestionNav, { navCallback: this.handleNavClick, hideNext: hideNext, hidePrev: hidePrev })
 			);
 		}
 	});
@@ -19456,8 +19471,10 @@ module.exports = require('./lib/React');
 			this.props.submitCallback(this.props.data.id, e.target.choice.value);
 		},
 		render: function () {
+			var cssClasses = "";
+			var checked = "";
 			var choices = this.props.data.choices.map(function (choice) {
-				var cssClasses = (this.props.data.selectedAnswer == choice.id) + " " + (this.props.data.correctAnswer == choice.id ? "text-success" : "");
+				cssClasses = (this.props.data.selectedAnswer == choice.id) + " " + (this.props.data.correctAnswer == choice.id ? "text-success" : "");
 				return React.createElement(
 					'li',
 					{ key: choice.id, className: cssClasses },
@@ -19471,40 +19488,44 @@ module.exports = require('./lib/React');
 				);
 			}, this);
 			return React.createElement(
-				'li',
-				{ className: 'list-group-item' },
+				'div',
+				{ className: 'panel panel-default' },
 				React.createElement(
-					'form',
-					{ className: "questionForm " + this.props.data.status, role: 'form', onSubmit: this.handleSubmit },
-					React.createElement('input', { type: 'hidden', value: this.props.data.id, name: 'id' }),
+					'div',
+					{ className: 'panel-body' },
 					React.createElement(
-						'h4',
-						null,
-						this.props.data.questionText
-					),
-					React.createElement(
-						'ul',
-						null,
-						choices
-					),
-					React.createElement(
-						'div',
-						{ className: 'row' },
+						'form',
+						{ className: "questionForm " + this.props.data.status, role: 'form', onSubmit: this.handleSubmit },
+						React.createElement('input', { type: 'hidden', value: this.props.data.id, name: 'id' }),
+						React.createElement(
+							'h4',
+							null,
+							this.props.number + ". " + this.props.data.questionText
+						),
+						React.createElement(
+							'ul',
+							null,
+							choices
+						),
 						React.createElement(
 							'div',
-							{ className: 'col-xs-12' },
+							{ className: 'row' },
 							React.createElement(
-								'button',
-								{ type: 'submit', className: 'btn btn-success pull-right' },
-								'Submit'
-							),
-							React.createElement(
-								'label',
-								{ className: 'result pull-right' },
-								React.createElement('span', { className: 'glyphicon glyphicon-ok' }),
-								React.createElement('span', { className: 'glyphicon glyphicon-remove' }),
-								' ',
-								this.props.data.status
+								'div',
+								{ className: 'col-xs-12' },
+								React.createElement(
+									'button',
+									{ type: 'submit', className: 'btn btn-success pull-right' },
+									'Submit'
+								),
+								React.createElement(
+									'label',
+									{ className: 'result pull-right' },
+									React.createElement('span', { className: 'glyphicon glyphicon-ok' }),
+									React.createElement('span', { className: 'glyphicon glyphicon-remove' }),
+									' ',
+									this.props.data.status
+								)
 							)
 						)
 					)
@@ -19551,15 +19572,12 @@ module.exports = require('./lib/React');
 							React.createElement(
 								'h3',
 								null,
-								'Correct: ',
+								React.createElement('span', { className: 'glyphicon glyphicon-ok text-success' }),
+								' ',
 								React.createElement(
 									'strong',
 									null,
-									React.createElement(
-										'span',
-										{ className: 'text-success' },
-										this.props.correctAnswers
-									)
+									this.props.correctAnswers
 								)
 							)
 						),
@@ -19569,15 +19587,12 @@ module.exports = require('./lib/React');
 							React.createElement(
 								'h3',
 								null,
-								'Wrong: ',
+								React.createElement('span', { className: 'glyphicon glyphicon-remove text-danger' }),
+								' ',
 								React.createElement(
 									'strong',
 									null,
-									React.createElement(
-										'span',
-										{ className: 'text-danger' },
-										this.props.wrongAnswers
-									)
+									this.props.wrongAnswers
 								)
 							)
 						),
@@ -19595,6 +19610,65 @@ module.exports = require('./lib/React');
 								)
 							)
 						)
+					)
+				)
+			);
+		}
+	});
+
+	var QuestionGrid = React.createClass({
+		displayName: 'QuestionGrid',
+
+		tileClick: function (e) {
+			if ($(e.target).data('question')) this.props.selectCallback($(e.target).data('question'));
+		},
+		render: function () {
+			var questionNodes = this.props.data.map(function (question, i) {
+				var selectedCssClass = question.id == this.props.selectedQuestion ? "selected" : "";
+				return React.createElement(
+					'div',
+					{ key: question.id, className: "col-sm-3 col-md-2 questionTile" },
+					React.createElement(
+						'div',
+						{ className: question.status + " " + selectedCssClass, role: 'button', onClick: this.tileClick, 'data-question': question.id },
+						i + 1
+					)
+				);
+			}, this);
+			return React.createElement(
+				'div',
+				{ className: 'row questionGrid' },
+				React.createElement(
+					'div',
+					{ className: 'col-xs-12' },
+					questionNodes
+				)
+			);
+		}
+	});
+
+	var QuestionNav = React.createClass({
+		displayName: 'QuestionNav',
+
+		navClick: function (e) {
+			if ($(e.target).data('direction')) this.props.navCallback($(e.target).data('direction'));
+		},
+		render: function () {
+			return React.createElement(
+				'div',
+				{ className: 'row' },
+				React.createElement(
+					'div',
+					{ className: 'col-xs-12' },
+					React.createElement(
+						'button',
+						{ type: 'button', className: "btn btn-default pull-left " + this.props.hidePrev, 'data-direction': '-1', onClick: this.navClick },
+						'Prev'
+					),
+					React.createElement(
+						'button',
+						{ type: 'button', className: "btn btn-default pull-right " + this.props.hideNext, 'data-direction': '1', onClick: this.navClick },
+						'Next'
 					)
 				)
 			);

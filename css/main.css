@@ -20,6 +20,9 @@ header {
 	text-align: center;
 	margin-bottom: 20px;
 }
+h1 {
+	font-weight: bold;
+}
 h1, h2 {
 	margin: 0;
 	padding: 0;
@@ -27,66 +30,72 @@ h1, h2 {
 
 /* LAYOUT */
 .questionGrid {
-	width: 100%;
-	max-width: 800px;
-	margin: 0 auto;
-	display: block;
+	margin-bottom: 20px;
 }
-.questionGrid div[class^="col-"] {
+.questionGrid .questionTile {
 	padding: 3px;
 }
-.questionTile {
+.questionTile > div {
 	width: 100%;
-	height: 200px;
+	height: 150px;
 	display: block;
 	padding: 20px;
 	background-color: #fff;
-	line-height: 160px;
+	line-height: 110px;
 	text-align: center;
-	font-size: 4em;
+	font-size: 3em;
 	cursor: pointer;
+	border: #ddd solid 1px; 
 }
-.questionTile:hover, .questionTile:focus, .questionTile:active {
+.questionTile > div:hover, .questionTile > div:focus, .questionTile > div:active, .questionTile > .selected {
 	background-color: #FFDC64;
 }
-/*
-.correct, .correct:hover, .correct:focus, .correct:active {
+.questionTile > .selected {
+   border: 5px solid #000;
+}
+.questionTile .correct, .questionTile .correct:hover, .questionTile .correct:focus, .questionTile .correct:active {
 	background-color: #60A565;
+	color:#fff;
 }
-.wrong, .wrong:hover, .wrong:focus, .wrong:active {
+.questionTile .wrong, .questionTile .wrong:hover, .questionTile .wrong:focus, .questionTile .wrong:active {
 	background-color: #BC5E5C;
+	color:#fff;
 }
-*/
+
 .correct .btn-success, .wrong .btn-success {
 	display: none;
 }
 .result {
 	text-transform: capitalize;
 }
-.unanswered .result, .glyphicon-ok, .glyphicon-remove {
+.unanswered .result, .result .glyphicon {
 	display: none;
 }
 .correct .result, .wrong .result, .correct .result .glyphicon-ok, .wrong .result .glyphicon-remove {
 	display: block;
 }
-.correct .result, .correct li.true {
+.correct .result, .correct li.true, .text-success {
 	color: #60A565;
 }
-.wrong .result, .wrong li.true {
+.wrong .result, .wrong li.true, .text-danger {
 	color: #BC5E5C;
 }
-#questionModal ul, .questionForm ul {
+.questionForm h4 {
+	margin-bottom: 30px;
+}
+.questionForm ul {
 	list-style-type: none;
 	padding-left:10px;
 }
-@media (min-width: 768px) {
-.modal-dialog {
-	margin-top: 150px;
-}
-}
+
 
 /* MODULES */
 
 /* STATES */
-
+.hide {
+	display: none;
+}
+.show {
+	display: block;
+}
 /* THEME */
