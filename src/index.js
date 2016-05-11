@@ -17,7 +17,14 @@ var ReactDOM = require('react-dom');
 
 var BuzzQuizApp = React.createClass({
 	getInitialState: function() {
-		return {questions: [], selectedQuestion: -1, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount};
+		return {
+			questions: [], 
+			selectedQuestion: -1, 
+			correctAnswers: correctAnswersCount, 
+			wrongAnswers: wrongAnswersCount,
+			errorMessage: '',
+			showQuestion: false
+		};
 	},
     componentDidMount: function() {
       this.loadQuestionsFromServer();
@@ -28,18 +35,23 @@ var BuzzQuizApp = React.createClass({
 			dataType: 'json',
 			cache:false,
 			success: function(data) {
-				data.forEach(function(obj, i) {
-					QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
-				});
-				this.setState({questions: QuestionStore});
+				try {
+					data.forEach(function(obj, i) {
+						QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
+					});
+					this.setState({questions: QuestionStore, errorMessage: ''});
+				} catch(err) {
+					this.setState({errorMessage: err.toString()});
+				}
 			}.bind(this),
 			error: function(xhr, status, err) {
 				console.error(this.props.url, status, err.toString());
+				this.setState({errorMessage: err.toString()});
 			}.bind(this)
 		});
 	},
 	handleQuestionSelect: function(questionId) {
-		this.setState({selectedQuestion: questionId});
+		this.setState({selectedQuestion: questionId, showQuestion: true});
 	},
 	handleQuestionSubmit: function(questionId, selectedAnswer) {
 		if (selectedAnswer && selectedAnswer > 0) {
@@ -49,21 +61,31 @@ var BuzzQuizApp = React.createClass({
 				type: 'post',
 				success: function(res) {
 					if(res && res != null || res != undefined) {
-						var response = JSON.parse(res);
-						for(var i=0, len = QuestionStore.length; i < len; i++) {
-							if (QuestionStore[i].id === questionId) {
-								QuestionStore[i].status = response.result;
-								QuestionStore[i].correctAnswer = response.correctAnswer;
-								QuestionStore[i].selectedAnswer = selectedAnswer;
-								response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
-								this.setState({questions: QuestionStore, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount});
-								break;
+						try {
+							var response = JSON.parse(res);
+							for(var i=0, len = QuestionStore.length; i < len; i++) {
+								if (QuestionStore[i].id === questionId) {
+									QuestionStore[i].status = response.result;
+									QuestionStore[i].correctAnswer = response.correctAnswer;
+									QuestionStore[i].selectedAnswer = selectedAnswer;
+									response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
+									this.setState({
+										questions: QuestionStore, 
+										correctAnswers: correctAnswersCount, 
+										wrongAnswers: wrongAnswersCount,
+										errorMessage: ''
+									});
+									break;
+								}
 							}
+						} catch (err) {
+							this.setState({errorMessage: err.toString()});
 						}
 					}
 				}.bind(this),
 				error: function(xhr, status, err) {
 					console.error('checkanswer.php', status, err.toString());
+					this.setState({errorMessage: err.toString()});
 				}.bind(this)
 			});
 
@@ -78,25 +100,32 @@ var BuzzQuizApp = React.createClass({
 		} else if (d < 0 && newSelectedQuestion > 1) {
 			newSelectedQuestion--;
 		}
-		if (newSelectedQuestion !== this.state.selectedQuestion) this.handleQuestionSelect(newSelectedQuestion);
+		if (newSelectedQuestion !== this.state.selectedQuestion) this.setState({selectedQuestion: newSelectedQuestion});
+	},
+	handleGridClick: function() {
+		this.setState({showQuestion: false});
 	},
 	render: function() {
 		var questionNodes = this.state.questions.map(function(question, i) {
 			if (question.id == this.state.selectedQuestion) {
 				return (
-					<Question number={i+1} data={question} key={question.id} submitCallback={this.handleQuestionSubmit} />
+					<Question number={i+1} data={question} key={question.id} submitCallback={this.handleQuestionSubmit} show={this.state.showQuestion} />
 				);
 			}
 		}, this);
-		var hideNext = (this.state.selectedQuestion === this.state.questions.length || this.state.selectedQuestion < 0) ? "hide":"show";
-		var hidePrev = (this.state.selectedQuestion === 1 || this.state.selectedQuestion < 0) ? "hide":"show";
+		var hideNext = (this.state.selectedQuestion === this.state.questions.length || this.state.selectedQuestion < 0) ? "hide":"show",
+			hidePrev = (this.state.selectedQuestion === 1 || this.state.selectedQuestion < 0) ? "hide":"show",
+			showNav = this.state.showQuestion ? "show":"hide";
+
 		return (
 			<div className="buzzQuizApp">
 				<Summary total={this.state.questions.length} correctAnswers={this.state.correctAnswers} wrongAnswers={this.state.wrongAnswers} />
-				{questionNodes}
-				<QuestionNav navCallback={this.handleNavClick} hideNext={hideNext} hidePrev={hidePrev} />
-				<h3>Select a question to begin</h3>
-				<QuestionGrid data={this.state.questions} selectCallback={this.handleQuestionSelect} selectedQuestion={this.state.selectedQuestion} />
+				<div className="container">
+					<ErrorBlock message={this.state.errorMessage} />
+					{questionNodes}
+					<QuestionGrid data={this.state.questions} selectCallback={this.handleQuestionSelect} selectedQuestion={this.state.selectedQuestion} show={!this.state.showQuestion} />
+					<QuestionNav navCallback={this.handleNavClick} gridCallback={this.handleGridClick} hideNext={hideNext} hidePrev={hidePrev} show={showNav} />
+				</div>
 			</div>
 		);
 	}
@@ -105,12 +134,11 @@ var BuzzQuizApp = React.createClass({
 var Question = React.createClass({
 	handleSubmit: function(e) {
 		e.preventDefault();
-		var selected = $(e.target).find("input[type='radio']:checked");
+		var selected = $(e.currentTarget).find("input[type='radio']:checked");
 		this.props.submitCallback(this.props.data.id, selected.val());
 	},
 	render: function() {
 		var cssClasses = "";
-		var checked = "";
 		var choices = this.props.data.choices.map(function(choice) {
 			cssClasses = (this.props.data.selectedAnswer == choice.id) + " " + (this.props.data.correctAnswer == choice.id ? "text-success" : "");
 			return (
@@ -119,8 +147,9 @@ var Question = React.createClass({
         		</li>
 			);
 		}, this);
+		var showQuestionCssClass = this.props.show ? "show" : "hide";
 		return(
-			<div className="panel panel-default questionPanel">
+			<div className={"panel panel-default questionPanel " + showQuestionCssClass}>
 				<div className="panel-body">
 			      	<form className={"questionForm " + this.props.data.status} role="form" onSubmit={this.handleSubmit}>
 			      		<input type="hidden" value={this.props.data.id} name="id" />
@@ -144,21 +173,17 @@ var Question = React.createClass({
 var Summary = React.createClass({
 	render: function() {
 		return (
-			<div className="panel panel-default">
-				<div className="panel-body">
-					<h2>Summary</h2>
+			<div className="summary">
+				<div className="container">
 					<div className="text-center">
-						<div className="col-xs-4 col-sm-3">
-							<h3>Total: <strong>{this.props.total}</strong></h3>
+						<div className="col-xs-4">
+							<h3><span className="glyphicon glyphicon-th"></span> <strong>{this.props.total}</strong></h3>
 						</div>
-						<div className="col-xs-4 col-sm-3">
+						<div className="col-xs-4">
 							<h3><span className="glyphicon glyphicon-ok text-success"></span> <strong>{this.props.correctAnswers}</strong></h3>
 						</div>
-						<div className="col-xs-4 col-sm-3">
+						<div className="col-xs-4">
 							<h3><span className="glyphicon glyphicon-remove text-danger"></span> <strong>{this.props.wrongAnswers}</strong></h3>
-						</div>
-						<div className="col-xs-12 col-sm-3">
-							<h3>Score: <strong>{((this.props.correctAnswers/this.props.total)*100).toFixed(0) + "%"}</strong></h3>
 						</div>
 					</div>
 				</div>
@@ -169,7 +194,7 @@ var Summary = React.createClass({
 
 var QuestionGrid = React.createClass({
 	tileClick: function(e) {
-		if ($(e.target).data('question')) this.props.selectCallback($(e.target).data('question'));
+		if ($(e.currentTarget).data('question')) this.props.selectCallback($(e.currentTarget).data('question'));
 	},
 	render: function() {
 		var questionNodes = this.props.data.map(function(question, i) {
@@ -182,9 +207,11 @@ var QuestionGrid = React.createClass({
 				</div>
 			);
 		}, this);
+		var showGridCssClass = this.props.show ? "show" : "hide";
 		return (
-			<div className="row questionGrid">
+			<div className={"row questionGrid " + showGridCssClass}>
 				<div className="col-xs-12">
+					<h3>Select a question</h3>
 					{questionNodes}
 				</div>
 			</div>
@@ -194,16 +221,32 @@ var QuestionGrid = React.createClass({
 
 var QuestionNav = React.createClass({
 	navClick: function(e) {
-		if ($(e.target).data('direction')) this.props.navCallback($(e.target).data('direction'));
+		if ($(e.currentTarget).data('direction')) this.props.navCallback($(e.currentTarget).data('direction'));
+	},
+	gridClick: function(e) {
+		this.props.gridCallback();
 	},
 	render: function() {
 		return (
-			<div className="row questionNav">
-				<div className="col-xs-12">
-					<button type="button" className={"btn btn-default pull-left " + this.props.hidePrev} data-direction="-1" onClick={this.navClick}>Prev</button>
-					<button type="button" className={"btn btn-default pull-right " + this.props.hideNext} data-direction="1" onClick={this.navClick}>Next</button>
+			<div className={"row questionNav " + this.props.show}>
+				<div className="col-xs-4">
+					<button type="button" className={"btn btn-default pull-left " + this.props.hidePrev} data-direction="-1" onClick={this.navClick}><span className="glyphicon glyphicon-chevron-left"></span></button>
+				</div>
+				<div className="col-xs-4">
+					<button type="button" className="btn btn-default center-block" onClick={this.gridClick}><span className="glyphicon glyphicon-th"></span></button>
+				</div>
+				<div className="col-xs-4">
+					<button type="button" className={"btn btn-default pull-right " + this.props.hideNext} data-direction="1" onClick={this.navClick}><span className="glyphicon glyphicon-chevron-right"></span></button>
 				</div>
 			</div>
+		);
+	}
+});
+
+var ErrorBlock = React.createClass({
+	render: function() {
+		return (
+			<div className="help-block text-danger">{this.props.message}</div>
 		);
 	}
 });

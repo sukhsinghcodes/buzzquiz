@@ -19383,7 +19383,14 @@ module.exports = require('./lib/React');
 		displayName: 'BuzzQuizApp',
 
 		getInitialState: function () {
-			return { questions: [], selectedQuestion: -1, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount };
+			return {
+				questions: [],
+				selectedQuestion: -1,
+				correctAnswers: correctAnswersCount,
+				wrongAnswers: wrongAnswersCount,
+				errorMessage: '',
+				showQuestion: false
+			};
 		},
 		componentDidMount: function () {
 			this.loadQuestionsFromServer();
@@ -19394,18 +19401,23 @@ module.exports = require('./lib/React');
 				dataType: 'json',
 				cache: false,
 				success: function (data) {
-					data.forEach(function (obj, i) {
-						QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
-					});
-					this.setState({ questions: QuestionStore });
+					try {
+						data.forEach(function (obj, i) {
+							QuestionStore.push(new QuestionObj(obj.id, obj.questionText, obj.choices));
+						});
+						this.setState({ questions: QuestionStore, errorMessage: '' });
+					} catch (err) {
+						this.setState({ errorMessage: err.toString() });
+					}
 				}.bind(this),
 				error: function (xhr, status, err) {
 					console.error(this.props.url, status, err.toString());
+					this.setState({ errorMessage: err.toString() });
 				}.bind(this)
 			});
 		},
 		handleQuestionSelect: function (questionId) {
-			this.setState({ selectedQuestion: questionId });
+			this.setState({ selectedQuestion: questionId, showQuestion: true });
 		},
 		handleQuestionSubmit: function (questionId, selectedAnswer) {
 			if (selectedAnswer && selectedAnswer > 0) {
@@ -19415,21 +19427,31 @@ module.exports = require('./lib/React');
 					type: 'post',
 					success: function (res) {
 						if (res && res != null || res != undefined) {
-							var response = JSON.parse(res);
-							for (var i = 0, len = QuestionStore.length; i < len; i++) {
-								if (QuestionStore[i].id === questionId) {
-									QuestionStore[i].status = response.result;
-									QuestionStore[i].correctAnswer = response.correctAnswer;
-									QuestionStore[i].selectedAnswer = selectedAnswer;
-									response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
-									this.setState({ questions: QuestionStore, correctAnswers: correctAnswersCount, wrongAnswers: wrongAnswersCount });
-									break;
+							try {
+								var response = JSON.parse(res);
+								for (var i = 0, len = QuestionStore.length; i < len; i++) {
+									if (QuestionStore[i].id === questionId) {
+										QuestionStore[i].status = response.result;
+										QuestionStore[i].correctAnswer = response.correctAnswer;
+										QuestionStore[i].selectedAnswer = selectedAnswer;
+										response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
+										this.setState({
+											questions: QuestionStore,
+											correctAnswers: correctAnswersCount,
+											wrongAnswers: wrongAnswersCount,
+											errorMessage: ''
+										});
+										break;
+									}
 								}
+							} catch (err) {
+								this.setState({ errorMessage: err.toString() });
 							}
 						}
 					}.bind(this),
 					error: function (xhr, status, err) {
 						console.error('checkanswer.php', status, err.toString());
+						this.setState({ errorMessage: err.toString() });
 					}.bind(this)
 				});
 			}
@@ -19442,28 +19464,33 @@ module.exports = require('./lib/React');
 			} else if (d < 0 && newSelectedQuestion > 1) {
 				newSelectedQuestion--;
 			}
-			if (newSelectedQuestion !== this.state.selectedQuestion) this.handleQuestionSelect(newSelectedQuestion);
+			if (newSelectedQuestion !== this.state.selectedQuestion) this.setState({ selectedQuestion: newSelectedQuestion });
+		},
+		handleGridClick: function () {
+			this.setState({ showQuestion: false });
 		},
 		render: function () {
 			var questionNodes = this.state.questions.map(function (question, i) {
 				if (question.id == this.state.selectedQuestion) {
-					return React.createElement(Question, { number: i + 1, data: question, key: question.id, submitCallback: this.handleQuestionSubmit });
+					return React.createElement(Question, { number: i + 1, data: question, key: question.id, submitCallback: this.handleQuestionSubmit, show: this.state.showQuestion });
 				}
 			}, this);
-			var hideNext = this.state.selectedQuestion === this.state.questions.length || this.state.selectedQuestion < 0 ? "hide" : "show";
-			var hidePrev = this.state.selectedQuestion === 1 || this.state.selectedQuestion < 0 ? "hide" : "show";
+			var hideNext = this.state.selectedQuestion === this.state.questions.length || this.state.selectedQuestion < 0 ? "hide" : "show",
+			    hidePrev = this.state.selectedQuestion === 1 || this.state.selectedQuestion < 0 ? "hide" : "show",
+			    showNav = this.state.showQuestion ? "show" : "hide";
+
 			return React.createElement(
 				'div',
 				{ className: 'buzzQuizApp' },
 				React.createElement(Summary, { total: this.state.questions.length, correctAnswers: this.state.correctAnswers, wrongAnswers: this.state.wrongAnswers }),
-				questionNodes,
-				React.createElement(QuestionNav, { navCallback: this.handleNavClick, hideNext: hideNext, hidePrev: hidePrev }),
 				React.createElement(
-					'h3',
-					null,
-					'Select a question to begin'
-				),
-				React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion })
+					'div',
+					{ className: 'container' },
+					React.createElement(ErrorBlock, { message: this.state.errorMessage }),
+					questionNodes,
+					React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion, show: !this.state.showQuestion }),
+					React.createElement(QuestionNav, { navCallback: this.handleNavClick, gridCallback: this.handleGridClick, hideNext: hideNext, hidePrev: hidePrev, show: showNav })
+				)
 			);
 		}
 	});
@@ -19473,12 +19500,11 @@ module.exports = require('./lib/React');
 
 		handleSubmit: function (e) {
 			e.preventDefault();
-			var selected = $(e.target).find("input[type='radio']:checked");
+			var selected = $(e.currentTarget).find("input[type='radio']:checked");
 			this.props.submitCallback(this.props.data.id, selected.val());
 		},
 		render: function () {
 			var cssClasses = "";
-			var checked = "";
 			var choices = this.props.data.choices.map(function (choice) {
 				cssClasses = (this.props.data.selectedAnswer == choice.id) + " " + (this.props.data.correctAnswer == choice.id ? "text-success" : "");
 				return React.createElement(
@@ -19493,9 +19519,10 @@ module.exports = require('./lib/React');
 					)
 				);
 			}, this);
+			var showQuestionCssClass = this.props.show ? "show" : "hide";
 			return React.createElement(
 				'div',
-				{ className: 'panel panel-default questionPanel' },
+				{ className: "panel panel-default questionPanel " + showQuestionCssClass },
 				React.createElement(
 					'div',
 					{ className: 'panel-body' },
@@ -19546,25 +19573,21 @@ module.exports = require('./lib/React');
 		render: function () {
 			return React.createElement(
 				'div',
-				{ className: 'panel panel-default' },
+				{ className: 'summary' },
 				React.createElement(
 					'div',
-					{ className: 'panel-body' },
-					React.createElement(
-						'h2',
-						null,
-						'Summary'
-					),
+					{ className: 'container' },
 					React.createElement(
 						'div',
 						{ className: 'text-center' },
 						React.createElement(
 							'div',
-							{ className: 'col-xs-4 col-sm-3' },
+							{ className: 'col-xs-4' },
 							React.createElement(
 								'h3',
 								null,
-								'Total: ',
+								React.createElement('span', { className: 'glyphicon glyphicon-th' }),
+								' ',
 								React.createElement(
 									'strong',
 									null,
@@ -19574,7 +19597,7 @@ module.exports = require('./lib/React');
 						),
 						React.createElement(
 							'div',
-							{ className: 'col-xs-4 col-sm-3' },
+							{ className: 'col-xs-4' },
 							React.createElement(
 								'h3',
 								null,
@@ -19589,7 +19612,7 @@ module.exports = require('./lib/React');
 						),
 						React.createElement(
 							'div',
-							{ className: 'col-xs-4 col-sm-3' },
+							{ className: 'col-xs-4' },
 							React.createElement(
 								'h3',
 								null,
@@ -19599,20 +19622,6 @@ module.exports = require('./lib/React');
 									'strong',
 									null,
 									this.props.wrongAnswers
-								)
-							)
-						),
-						React.createElement(
-							'div',
-							{ className: 'col-xs-12 col-sm-3' },
-							React.createElement(
-								'h3',
-								null,
-								'Score: ',
-								React.createElement(
-									'strong',
-									null,
-									(this.props.correctAnswers / this.props.total * 100).toFixed(0) + "%"
 								)
 							)
 						)
@@ -19626,7 +19635,7 @@ module.exports = require('./lib/React');
 		displayName: 'QuestionGrid',
 
 		tileClick: function (e) {
-			if ($(e.target).data('question')) this.props.selectCallback($(e.target).data('question'));
+			if ($(e.currentTarget).data('question')) this.props.selectCallback($(e.currentTarget).data('question'));
 		},
 		render: function () {
 			var questionNodes = this.props.data.map(function (question, i) {
@@ -19641,12 +19650,18 @@ module.exports = require('./lib/React');
 					)
 				);
 			}, this);
+			var showGridCssClass = this.props.show ? "show" : "hide";
 			return React.createElement(
 				'div',
-				{ className: 'row questionGrid' },
+				{ className: "row questionGrid " + showGridCssClass },
 				React.createElement(
 					'div',
 					{ className: 'col-xs-12' },
+					React.createElement(
+						'h3',
+						null,
+						'Select a question'
+					),
 					questionNodes
 				)
 			);
@@ -19657,26 +19672,54 @@ module.exports = require('./lib/React');
 		displayName: 'QuestionNav',
 
 		navClick: function (e) {
-			if ($(e.target).data('direction')) this.props.navCallback($(e.target).data('direction'));
+			if ($(e.currentTarget).data('direction')) this.props.navCallback($(e.currentTarget).data('direction'));
+		},
+		gridClick: function (e) {
+			this.props.gridCallback();
 		},
 		render: function () {
 			return React.createElement(
 				'div',
-				{ className: 'row questionNav' },
+				{ className: "row questionNav " + this.props.show },
 				React.createElement(
 					'div',
-					{ className: 'col-xs-12' },
+					{ className: 'col-xs-4' },
 					React.createElement(
 						'button',
 						{ type: 'button', className: "btn btn-default pull-left " + this.props.hidePrev, 'data-direction': '-1', onClick: this.navClick },
-						'Prev'
-					),
+						React.createElement('span', { className: 'glyphicon glyphicon-chevron-left' })
+					)
+				),
+				React.createElement(
+					'div',
+					{ className: 'col-xs-4' },
+					React.createElement(
+						'button',
+						{ type: 'button', className: 'btn btn-default center-block', onClick: this.gridClick },
+						React.createElement('span', { className: 'glyphicon glyphicon-th' })
+					)
+				),
+				React.createElement(
+					'div',
+					{ className: 'col-xs-4' },
 					React.createElement(
 						'button',
 						{ type: 'button', className: "btn btn-default pull-right " + this.props.hideNext, 'data-direction': '1', onClick: this.navClick },
-						'Next'
+						React.createElement('span', { className: 'glyphicon glyphicon-chevron-right' })
 					)
 				)
+			);
+		}
+	});
+
+	var ErrorBlock = React.createClass({
+		displayName: 'ErrorBlock',
+
+		render: function () {
+			return React.createElement(
+				'div',
+				{ className: 'help-block text-danger' },
+				this.props.message
 			);
 		}
 	});

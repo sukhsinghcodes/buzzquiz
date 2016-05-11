@@ -18,7 +18,6 @@ header {
 	padding: 10px;
 	width: 100%;
 	text-align: center;
-	margin-bottom: 20px;
 }
 h1 {
 	font-weight: bold;
@@ -38,10 +37,13 @@ h2, h3 {
 		font-size: 1.5em;
 	}
 }
+
 /* LAYOUT */
 .questionGrid {
 	margin-bottom: 20px;
 }
+
+/* MODULES */
 .questionGrid .questionTile {
 	padding: 3px;
 }
@@ -72,6 +74,36 @@ h2, h3 {
 	color:#fff;
 }
 
+.questionForm h4 {
+	margin-bottom: 30px;
+}
+.questionForm ul {
+	list-style-type: none;
+	padding-left:10px;
+}
+.questionPanel {
+	margin-top: 20px;
+}
+.questionNav {
+	padding-bottom: 20px; 
+}
+
+.summary {
+	background-color: #000;
+	color: #fff;
+}
+.summary h3 {
+	margin: 10px 0;
+}
+
+
+/* STATES */
+.hide {
+	display: none;
+}
+.show {
+	display: block;
+}
 .correct .btn-success, .wrong .btn-success {
 	display: none;
 }
@@ -90,24 +122,5 @@ h2, h3 {
 .wrong .result, .wrong li.true, .text-danger {
 	color: #BC5E5C;
 }
-.questionForm h4 {
-	margin-bottom: 30px;
-}
-.questionForm ul {
-	list-style-type: none;
-	padding-left:10px;
-}
-.questionNav {
-	padding-bottom: 30px; 
-}
 
-/* MODULES */
-
-/* STATES */
-.hide {
-	display: none;
-}
-.show {
-	display: block;
-}
 /* THEME */
