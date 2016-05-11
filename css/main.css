@@ -84,9 +84,6 @@ h2, h3 {
 .questionPanel {
 	margin-top: 20px;
 }
-.questionNav {
-	padding-bottom: 20px; 
-}
 
 .summary {
 	background-color: #000;
@@ -95,8 +92,13 @@ h2, h3 {
 .summary h3 {
 	margin: 10px 0;
 }
-
-
+.btn-primary {
+	background-color: #222;
+	border: none;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active{
+	background-color: #000;
+}
 /* STATES */
 .hide {
 	display: none;

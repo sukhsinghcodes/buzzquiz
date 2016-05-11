@@ -124,8 +124,8 @@ var BuzzQuizApp = React.createClass({
 					<ErrorBlock message={this.state.errorMessage} />
 					{questionNodes}
 					<QuestionGrid data={this.state.questions} selectCallback={this.handleQuestionSelect} selectedQuestion={this.state.selectedQuestion} show={!this.state.showQuestion} />
-					<QuestionNav navCallback={this.handleNavClick} gridCallback={this.handleGridClick} hideNext={hideNext} hidePrev={hidePrev} show={showNav} />
 				</div>
+				<QuestionNav navCallback={this.handleNavClick} gridCallback={this.handleGridClick} hideNext={hideNext} hidePrev={hidePrev} show={showNav} />
 			</div>
 		);
 	}
@@ -228,17 +228,19 @@ var QuestionNav = React.createClass({
 	},
 	render: function() {
 		return (
-			<div className={"row questionNav " + this.props.show}>
-				<div className="col-xs-4">
-					<button type="button" className={"btn btn-default pull-left " + this.props.hidePrev} data-direction="-1" onClick={this.navClick}><span className="glyphicon glyphicon-chevron-left"></span></button>
+			<nav className={"navbar navbar-inverse navbar-fixed-bottom questionNav " + this.props.show}>
+				<div className="container">
+					<div className="col-xs-4">
+						<button type="button" className={"btn btn-primary btn-lg navbar-btn pull-left " + this.props.hidePrev} data-direction="-1" onClick={this.navClick}><span className="glyphicon glyphicon-chevron-left"></span></button>
+					</div>
+					<div className="col-xs-4">
+						<button type="button" className="btn btn-primary btn-lg navbar-btn center-block" onClick={this.gridClick}><span className="glyphicon glyphicon-th"></span></button>
+					</div>
+					<div className="col-xs-4">
+						<button type="button" className={"btn btn-primary btn-lg navbar-btn pull-right " + this.props.hideNext} data-direction="1" onClick={this.navClick}><span className="glyphicon glyphicon-chevron-right"></span></button>
+					</div>
 				</div>
-				<div className="col-xs-4">
-					<button type="button" className="btn btn-default center-block" onClick={this.gridClick}><span className="glyphicon glyphicon-th"></span></button>
-				</div>
-				<div className="col-xs-4">
-					<button type="button" className={"btn btn-default pull-right " + this.props.hideNext} data-direction="1" onClick={this.navClick}><span className="glyphicon glyphicon-chevron-right"></span></button>
-				</div>
-			</div>
+			</nav>
 		);
 	}
 });

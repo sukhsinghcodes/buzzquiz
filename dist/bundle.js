@@ -19488,9 +19488,9 @@ module.exports = require('./lib/React');
 					{ className: 'container' },
 					React.createElement(ErrorBlock, { message: this.state.errorMessage }),
 					questionNodes,
-					React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion, show: !this.state.showQuestion }),
-					React.createElement(QuestionNav, { navCallback: this.handleNavClick, gridCallback: this.handleGridClick, hideNext: hideNext, hidePrev: hidePrev, show: showNav })
-				)
+					React.createElement(QuestionGrid, { data: this.state.questions, selectCallback: this.handleQuestionSelect, selectedQuestion: this.state.selectedQuestion, show: !this.state.showQuestion })
+				),
+				React.createElement(QuestionNav, { navCallback: this.handleNavClick, gridCallback: this.handleGridClick, hideNext: hideNext, hidePrev: hidePrev, show: showNav })
 			);
 		}
 	});
@@ -19679,33 +19679,37 @@ module.exports = require('./lib/React');
 		},
 		render: function () {
 			return React.createElement(
-				'div',
-				{ className: "row questionNav " + this.props.show },
+				'nav',
+				{ className: "navbar navbar-inverse navbar-fixed-bottom questionNav " + this.props.show },
 				React.createElement(
 					'div',
-					{ className: 'col-xs-4' },
+					{ className: 'container' },
 					React.createElement(
-						'button',
-						{ type: 'button', className: "btn btn-default pull-left " + this.props.hidePrev, 'data-direction': '-1', onClick: this.navClick },
-						React.createElement('span', { className: 'glyphicon glyphicon-chevron-left' })
-					)
-				),
-				React.createElement(
-					'div',
-					{ className: 'col-xs-4' },
+						'div',
+						{ className: 'col-xs-4' },
+						React.createElement(
+							'button',
+							{ type: 'button', className: "btn btn-primary btn-lg navbar-btn pull-left " + this.props.hidePrev, 'data-direction': '-1', onClick: this.navClick },
+							React.createElement('span', { className: 'glyphicon glyphicon-chevron-left' })
+						)
+					),
 					React.createElement(
-						'button',
-						{ type: 'button', className: 'btn btn-default center-block', onClick: this.gridClick },
-						React.createElement('span', { className: 'glyphicon glyphicon-th' })
-					)
-				),
-				React.createElement(
-					'div',
-					{ className: 'col-xs-4' },
+						'div',
+						{ className: 'col-xs-4' },
+						React.createElement(
+							'button',
+							{ type: 'button', className: 'btn btn-primary btn-lg navbar-btn center-block', onClick: this.gridClick },
+							React.createElement('span', { className: 'glyphicon glyphicon-th' })
+						)
+					),
 					React.createElement(
-						'button',
-						{ type: 'button', className: "btn btn-default pull-right " + this.props.hideNext, 'data-direction': '1', onClick: this.navClick },
-						React.createElement('span', { className: 'glyphicon glyphicon-chevron-right' })
+						'div',
+						{ className: 'col-xs-4' },
+						React.createElement(
+							'button',
+							{ type: 'button', className: "btn btn-primary btn-lg navbar-btn pull-right " + this.props.hideNext, 'data-direction': '1', onClick: this.navClick },
+							React.createElement('span', { className: 'glyphicon glyphicon-chevron-right' })
+						)
 					)
 				)
 			);
