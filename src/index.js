@@ -1,4 +1,5 @@
 (function() {
+
 function QuestionObj(id, questionText, choices) {
 	this.id = id;
 	this.questionText = questionText;
@@ -56,19 +57,27 @@ var BuzzQuizApp = React.createClass({
 	handleQuestionSubmit: function(questionId, selectedAnswer) {
 		if (selectedAnswer && selectedAnswer > 0) {
 			$.ajax({
-				url: 'checkanswer.php',
-				data: {questionId:questionId, answerId:selectedAnswer},
-				type: 'post',
+				url: 'answers.json',
 				success: function(res) {
 					if(res && res != null || res != undefined) {
 						try {
-							var response = JSON.parse(res);
-							for(var i=0, len = QuestionStore.length; i < len; i++) {
+							var answers = JSON.parse(res);
+							var result = 'wrong', correctAnswer = -1;
+							for (var i = 0, len = answers.length; i < len; i++) {
+								if(answers[i].id === questionId) {
+									correctAnswer = answers[i].answer;
+									if (correctAnswer === selectedAnswer) {
+										result = 'correct';
+									}
+									break;
+								}
+							}
+							for(var i = 0, len = QuestionStore.length; i < len; i++) {
 								if (QuestionStore[i].id === questionId) {
-									QuestionStore[i].status = response.result;
-									QuestionStore[i].correctAnswer = response.correctAnswer;
+									QuestionStore[i].status = result;
+									QuestionStore[i].correctAnswer = correctAnswer;
 									QuestionStore[i].selectedAnswer = selectedAnswer;
-									response.result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
+									result === 'correct' ? correctAnswersCount++ : wrongAnswersCount++;
 									this.setState({
 										questions: QuestionStore, 
 										correctAnswers: correctAnswersCount, 
@@ -84,7 +93,7 @@ var BuzzQuizApp = React.createClass({
 					}
 				}.bind(this),
 				error: function(xhr, status, err) {
-					console.error('checkanswer.php', status, err.toString());
+					console.error('Error mocking answer check', status, err.toString());
 					this.setState({errorMessage: err.toString()});
 				}.bind(this)
 			});
