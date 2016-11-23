@@ -20518,9 +20518,11 @@ module.exports = require('./lib/React');
 								    correctAnswer = -1;
 								for (var i = 0, len = answers.length; i < len; i++) {
 									if (answers[i].id === questionId) {
-										correctAnswer = answers[i].answer;
-										if (correctAnswer === selectedAnswer) {
+										correctAnswer = parseInt(answers[i].answer);
+										console.log(correctAnswer + ' = ' + selectedAnswer);
+										if (correctAnswer === parseInt(selectedAnswer)) {
 											result = 'correct';
+											console.log(result);
 										}
 										break;
 									}
